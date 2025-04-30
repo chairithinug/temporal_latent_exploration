@@ -4,6 +4,7 @@ Unused/
 *.log
 *.zip
 *.npy
+*.pt
 
 thesis_venv/
 predict/
