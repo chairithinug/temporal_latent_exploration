@@ -1,0 +1,14 @@
+__pycache__/
+Unused/
+
+*.log
+*.zip
+*.npy
+
+thesis_venv/
+predict/
+latent/
+checkpoints/
+visualization/
+wandb/
+mesh_vis/
