@@ -171,10 +171,23 @@ class TemporalAwareDataset(VortexSheddingRe300To1000Dataset):
         )
         self.base_graph = dgl.graph((self.A[0], self.A[1]), num_nodes=self.num_nodes)
         self.base_graph.edata["x"] = self.E
-        self.valid_indices = np.arange(0, 401) 
+        self.valid_indices = np.arange(0, 401)
+        self.precompute()
 
     def __len__(self): #
         return (self.sequence_len - 2) * self.sequence_num
+    
+    def precompute(self):
+        self.graphs = []
+        for s in range(len(self.solution_states)):
+            ss = []
+            for t in range(len(self.solution_states[0])):
+                node_features = self.solution_states[s, t]
+                graph = self.base_graph.clone()
+                graph.ndata["x"] = node_features
+                graph.ndata["y"] = node_features
+                ss.append(graph)
+            self.graphs.append(ss)
 
     def __getitem__(self, idx):
         sidx = idx // (self.sequence_len - 2)
@@ -183,14 +196,7 @@ class TemporalAwareDataset(VortexSheddingRe300To1000Dataset):
         pos_idx, neg_idx = np.random.choice(choices, size=2, replace=False)
         if abs(pos_idx - tidx) > abs(neg_idx - tidx): # equally distance is ignored for now.
             pos_idx, neg_idx = neg_idx, pos_idx
-        graphs = []
-        for i in [tidx, pos_idx, neg_idx]:
-            node_features = self.solution_states[sidx, i]
-            graph = self.base_graph.clone()
-            graph.ndata["x"] = node_features
-            graph.ndata["y"] = node_features
-            graphs.append(graph)
-        return tuple(graphs) # anchor, pos, neg
+        return tuple(self.graphs[sidx][i] for i in [tidx, pos_idx, neg_idx]) # anchor, pos, neg
     
 
 class LatentEvolutionDataset(VortexSheddingRe300To1000Dataset):

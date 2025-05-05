@@ -10,7 +10,6 @@ from dgl.dataloading import GraphDataLoader
 from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
 
-from constants import Constants
 from dataset import (
     VortexSheddingRe300To1000Dataset,
 )
@@ -41,7 +40,7 @@ if __name__ == "__main__":
     logger = PythonLogger("main")  # General python logger
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
-    dim = 2
+    dim = 128
     start = time.time()
     rank_zero_logger.info("Testing started...")
     rank_zero_logger.info(torch.cuda.is_available())
@@ -52,7 +51,7 @@ if __name__ == "__main__":
 
     config = AttrDict({
             'ckpt_path': "checkpoints/best",
-            'ckpt_name': f"model_l{dim}_best.pt",
+            'ckpt_name': f"model_l{dim}_3layers_best.pt",
             'batch_size': 1,
             'epochs': 300,
             'lr':  0.00001,
@@ -66,15 +65,15 @@ if __name__ == "__main__":
             'output_encode_dim': 3,
             'processor_size': 15,
 
-            'num_layers_node_processor': 2,
-            'num_layers_edge_processor': 2,
+            'num_layers_node_processor': 3,
+            'num_layers_edge_processor': 3,
             'hidden_dim_processor': 128,
             'hidden_dim_node_encoder': 128,
-            'num_layers_node_encoder': 2,
+            'num_layers_node_encoder': 3,
             'hidden_dim_edge_encoder': 128,
-            'num_layers_edge_encoder': 2,
+            'num_layers_edge_encoder': 3,
             'hidden_dim_node_decoder': 128,
-            'num_layers_node_decoder': 2,
+            'num_layers_node_decoder': 3,
             'k': 3,
         })
     trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)

@@ -25,7 +25,6 @@ from dgl.dataloading import GraphDataLoader
 from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
 
-from constants import Constants
 from dataset import (
     VortexSheddingRe300To1000Dataset,
 )
@@ -334,10 +333,10 @@ if __name__ == "__main__":
                  'value' : "checkpoints/new_encoding"
             },
             'ckpt_name': {
-                 'value' : f"model_l{latent}_3layers.pt"
+                 'value' : f"model_l{latent}_256hidden.pt"
             },
             'ckpt_name_best': {
-                 'value' : f"model_l{latent}_3layers_best.pt"
+                 'value' : f"model_l{latent}_256hidden_best.pt"
             },
             'batch_size': {
                  'value' : 8
@@ -376,10 +375,10 @@ if __name__ == "__main__":
                 'value' : 15
             },
             'num_layers_node_processor': {
-                'values' : [3]
+                'values' : [2]
             },
             'num_layers_edge_processor': {
-                'values' : [3]
+                'values' : [2]
             },
             'hidden_dim_processor': {
                 'values' : [128]
@@ -388,19 +387,19 @@ if __name__ == "__main__":
                 'values' : [128]
             },
             'num_layers_node_encoder': {
-                'values' : [3]
+                'values' : [2]
             },
             'hidden_dim_edge_encoder': {
                 'values' : [128]
             },
             'num_layers_edge_encoder': {
-                'values' : [3]
+                'values' : [2]
             },
             'hidden_dim_node_decoder': {
                 'values' : [128]
             },
             'num_layers_node_decoder': {
-                'values' : [3]
+                'values' : [2]
             },
              'k': {
                 'value' : 3

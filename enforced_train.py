@@ -30,7 +30,7 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from constants import Constants
+#from constants import Constants
 from dataset import (
     VortexSheddingRe300To1000Dataset, TemporalAwareDataset, LatentEvolutionDataset
 )
@@ -42,6 +42,23 @@ from physicsnemo.launch.logging import (
 from physicsnemo.launch.logging.wandb import initialize_wandb
 from physicsnemo.launch.utils import load_checkpoint, save_checkpoint
 from physicsnemo.models.mesh_reduced.mesh_reduced import Mesh_Reduced
+
+class TripletBatch:
+    def __init__(self, batch):
+        anchors, positives, negatives = zip(*batch)
+        self.batched_anchors = dgl.batch(anchors)
+        self.batched_positives = dgl.batch(positives)
+        self.batched_negatives = dgl.batch(negatives)
+
+    # custom memory pinning method on custom type
+    def pin_memory(self):
+        self.batched_anchors = self.batched_anchors.pin_memory_()
+        self.batched_positives = self.batched_positives.pin_memory_()
+        self.batched_negatives = self.batched_negatives.pin_memory_()
+        return self
+    
+    def __iter__(self):
+        return iter((self.batched_anchors, self.batched_positives, self.batched_negatives))
 
 class Mesh_ReducedTrainer:
     def __init__(self, wb, dist, rank_zero_logger, C):
@@ -61,21 +78,19 @@ class Mesh_ReducedTrainer:
         self.C = C
 
         def triplet_collate(batch):
-            anchors, positives, negatives = zip(*batch)
-            batched_anchors = dgl.batch(anchors)
-            batched_positives = dgl.batch(positives)
-            batched_negatives = dgl.batch(negatives)
-            return batched_anchors, batched_positives, batched_negatives
+            return TripletBatch(batch)
 
         self.dataloader = GraphDataLoader(
             dataset_train,
             batch_size=self.C.batch_size,
             shuffle=False,
             drop_last=True,
-            pin_memory=False,
+            pin_memory=True,
             use_ddp=dist.world_size > 1,
             num_workers=8,
             collate_fn=triplet_collate,
+            prefetch_factor=2,
+            persistent_workers=True,
         )
 
         self.dataloader_val = GraphDataLoader(
@@ -83,10 +98,12 @@ class Mesh_ReducedTrainer:
             batch_size=self.C.batch_size,
             shuffle=False,
             drop_last=True,
-            pin_memory=False,
+            pin_memory=True,
             use_ddp=dist.world_size > 1,
             num_workers=8,
             collate_fn=triplet_collate,
+            prefetch_factor=2,
+            persistent_workers=True,
         )
 
         self.dataloader_test = GraphDataLoader(
@@ -94,17 +111,18 @@ class Mesh_ReducedTrainer:
             batch_size=1,
             shuffle=False,
             drop_last=False,
-            pin_memory=False,
+            pin_memory=True,
             use_ddp=dist.world_size > 1,
-            num_workers=1,
-            collate_fn=triplet_collate,
+            num_workers=8,
+            persistent_workers=True,
+            #collate_fn=triplet_collate,
         )
 
         self.model = self.build_model()
         if self.C.jit:
-            self.model = torch.jit.script(self.model).to(dist.device)
+            self.model = torch.jit.script(self.model).to(dist.device, non_blocking=True)
         else:
-            self.model = self.model.to(dist.device)
+            self.model = self.model.to(dist.device, non_blocking=True)
         if self.C.watch_model and not self.C.jit and dist.rank == 0:
             wb.watch(self.model)
         self.model.train()
@@ -119,13 +137,15 @@ class Mesh_ReducedTrainer:
         if dist.world_size > 1:
             torch.distributed.barrier()
         self.epoch_init = load_checkpoint(
-            os.path.join(self.C.ckpt_path, self.C.ckpt_name),
+            os.path.join(self.C.ckpt_path, self.C.ckpt_name_best),
             models=self.model,
             optimizer=self.optimizer,
             scheduler=self.scheduler,
             scaler=self.scaler,
             device=dist.device,
         )
+        if self.C.triplet_loss or self.C.cosine_loss:
+            self.epoch_init = 0
 
     def build_model(self):
         model = Mesh_Reduced(
@@ -149,7 +169,7 @@ class Mesh_ReducedTrainer:
         if self.C.jit:
             self.model = torch.jit.script(self.model).to(self.dist.device)
         else:
-            self.model = self.model.to(self.dist.device)
+            self.model = self.model.to(self.dist.device, non_blocking=True)
         self.model.train()
         return model
 
@@ -174,7 +194,7 @@ class Mesh_ReducedTrainer:
         total_loss = 0
         zs = []
         for graph in graphs:
-            graph = graph.to(self.dist.device)
+            graph = graph.to(self.dist.device, non_blocking=True)
             loss, z = self.forward(graph, position_mesh, position_pivotal, return_z=True) # reconstruction
             zs.append(z.view(self.C.batch_size, -1))
             total_loss += loss
@@ -182,7 +202,7 @@ class Mesh_ReducedTrainer:
         if self.C.triplet_loss:
             total_loss += F.triplet_margin_loss(zs[0], zs[1], zs[2], margin=0.5) # triplet loss
         if self.C.cosine_loss:
-            labels = torch.ones(len(zs[0])).to(self.dist.device)
+            labels = torch.ones(len(zs[0])).to(self.dist.device, non_blocking=True)
             total_loss += F.cosine_embedding_loss(zs[0], zs[1], labels)
             total_loss += F.cosine_embedding_loss(zs[1], zs[2], labels)
             total_loss += F.cosine_embedding_loss(zs[0], zs[2], labels)
@@ -205,7 +225,7 @@ class Mesh_ReducedTrainer:
 
     @torch.no_grad()
     def test(self, graph, position_mesh, position_pivotal):
-        graph = graph.to(self.dist.device)
+        graph = graph.to(self.dist.device, non_blocking=True)
         with autocast(enabled=self.C.amp):
             z = self.model.encode(
                 graph.ndata["x"],
@@ -237,7 +257,7 @@ class Mesh_ReducedTrainer:
     
     @torch.no_grad()
     def predict(self, graph, position_mesh, position_pivotal):
-        graph = graph.to(self.dist.device)
+        graph = graph.to(self.dist.device, non_blocking=True)
         with autocast(enabled=self.C.amp):
             z = self.model.encode(
                 graph.ndata["x"],
@@ -253,7 +273,7 @@ class Mesh_ReducedTrainer:
     
     @torch.no_grad()
     def decode(self, z, graph, position_mesh, position_pivotal):
-        graph = graph.to(self.dist.device)
+        graph = graph.to(self.dist.device, non_blocking=True)
         with autocast(enabled=self.C.amp):
             x = self.model.decode(
                     z, graph.edata["x"], graph, position_mesh, position_pivotal
@@ -277,11 +297,11 @@ class Mesh_ReducedTrainer:
             _, z = self.predict(
                 graph, position_mesh, position_pivotal
             )
-            latents[j] = z.cpu()
+            latents[0, j] = z.cpu()
         np.save(f'latent_evolution/{epoch}_{self.C.triplet_loss}_{self.C.cosine_loss}.npy', latents)
         for i, name in zip(range(3), ['x', 'y', 'p']):
             sc = StandardScaler()
-            x_reduced = sc.fit_transform(latent[:,:,i])
+            x_reduced = sc.fit_transform(latents[0,:,:,i])
 
             plt.figure(figsize=(12, 8))
             fig, ax = plt.subplots(1)
@@ -295,7 +315,7 @@ class Mesh_ReducedTrainer:
             sm = plt.cm.ScalarMappable(cmap="rainbow", norm=norm)
             fig.colorbar(sm, cax=cax, orientation="vertical")
             plt.title('Timesteps')
-            fname = f'latent_evolution/{epoch}_{self.C.triplet_loss}_{self.C.cosine_loss}.png'
+            fname = f'latent_evolution/{epoch}_{self.C.triplet_loss}_{self.C.cosine_loss}_{name}.png'
             plt.savefig(fname, bbox_inches='tight')
             plt.close()
 
@@ -310,6 +330,8 @@ def search(config=None):
         config = wb.config
         rank_zero_logger.info(config)
         trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)
+
+        trainer.plot_latent(-1)
 
         for epoch in range(trainer.epoch_init, config.epochs):
             total_loss = 0
@@ -382,22 +404,17 @@ if __name__ == "__main__":
     np.random.seed(seed=DistributedManager().rank)
     dist = DistributedManager()
 
-    # save constants to JSON file
-    if dist.rank == 0:
-        os.makedirs("checkpoints/new_encoding", exist_ok=True)
-
     logger = PythonLogger("main")  # General python logger
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
 
     start = time.time()
     rank_zero_logger.info("Training started...")
-
     rank_zero_logger.info(torch.cuda.is_available())
     rank_zero_logger.info(dist.device)
     latent = 2
-    position_mesh = torch.from_numpy(np.loadtxt("dataset/meshPosition_all.txt")).to(dist.device)
-    position_pivotal = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_pivotal_l{latent}.txt")).to(dist.device)
+    position_mesh = torch.from_numpy(np.loadtxt("dataset/meshPosition_all.txt")).to(dist.device, non_blocking=True)
+    position_pivotal = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_pivotal_l{latent}.txt")).to(dist.device, non_blocking=True)
 
     sweep_config = {
         'method': 'random',
@@ -407,19 +424,19 @@ if __name__ == "__main__":
             },
         'parameters': {
             'ckpt_path': {
-                 'value' : "checkpoints/new_encoding"
+                 'value' : "checkpoints/test_embedding_evo_all"
             },
             'ckpt_name': {
-                 'value' : f"model_l{latent}_3layers_forced.pt"
+                 'value' : f"model_l{latent}.pt"
             },
             'ckpt_name_best': {
-                 'value' : f"model_l{latent}_3layers_forced_best.pt"
+                 'value' : f"model_l{latent}_best.pt"
             },
             'batch_size': {
                  'value' : 8
             },
             'epochs': {
-                 'value' : 400
+                 'value' : 100
             },
             'lr': {
                  'value' : 0.00001
@@ -452,10 +469,10 @@ if __name__ == "__main__":
                 'value' : 15
             },
             'num_layers_node_processor': {
-                'values' : [3]
+                'values' : [2]
             },
             'num_layers_edge_processor': {
-                'values' : [3]
+                'values' : [2]
             },
             'hidden_dim_processor': {
                 'values' : [128]
@@ -464,19 +481,19 @@ if __name__ == "__main__":
                 'values' : [128]
             },
             'num_layers_node_encoder': {
-                'values' : [3]
+                'values' : [2]
             },
             'hidden_dim_edge_encoder': {
                 'values' : [128]
             },
             'num_layers_edge_encoder': {
-                'values' : [3]
+                'values' : [2]
             },
             'hidden_dim_node_decoder': {
                 'values' : [128]
             },
             'num_layers_node_decoder': {
-                'values' : [3]
+                'values' : [2]
             },
              'k': {
                 'value' : 3
@@ -485,7 +502,7 @@ if __name__ == "__main__":
                 'value' : True
             },
             'cosine_loss':{
-                'value' : False
+                'value' : True
             },
         }
     }
