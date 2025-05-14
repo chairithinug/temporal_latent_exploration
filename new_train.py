@@ -381,22 +381,22 @@ if __name__ == "__main__":
                 'values' : [2]
             },
             'hidden_dim_processor': {
-                'values' : [128]
+                'values' : [256]
             },
             'hidden_dim_node_encoder': {
-                'values' : [128]
+                'values' : [256]
             },
             'num_layers_node_encoder': {
                 'values' : [2]
             },
             'hidden_dim_edge_encoder': {
-                'values' : [128]
+                'values' : [256]
             },
             'num_layers_edge_encoder': {
                 'values' : [2]
             },
             'hidden_dim_node_decoder': {
-                'values' : [128]
+                'values' : [256]
             },
             'num_layers_node_decoder': {
                 'values' : [2]

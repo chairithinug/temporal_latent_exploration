@@ -21,7 +21,7 @@ import torch
 import wandb as wb
 from tqdm import tqdm
 
-from constants import Constants
+# from constants import Constants
 from dgl.dataloading import GraphDataLoader
 from dataset import (
     VortexSheddingRe300To1000Dataset,
@@ -59,8 +59,8 @@ if __name__ == "__main__":
     #for dim in [16, 32, 64, 128, 256]:
     for dim in [2]:
         config = AttrDict({
-            'ckpt_path': "checkpoints/new_encoding",
-            'ckpt_name': f"model_l{dim}_3layers_forced_best.pt",
+            'ckpt_path': "checkpoints/test_embedding_evo_triplet",
+            'ckpt_name': f"model_l{dim}_best.pt",
             'batch_size': 1,
             'epochs': 300,
             'lr':  0.00001,
@@ -74,15 +74,15 @@ if __name__ == "__main__":
             'output_encode_dim': 3,
             'processor_size': 15,
 
-            'num_layers_node_processor': 3,
-            'num_layers_edge_processor': 3,
+            'num_layers_node_processor': 2,
+            'num_layers_edge_processor': 2,
             'hidden_dim_processor': 128,
             'hidden_dim_node_encoder': 128,
-            'num_layers_node_encoder': 3,
+            'num_layers_node_encoder': 2,
             'hidden_dim_edge_encoder': 128,
-            'num_layers_edge_encoder': 3,
+            'num_layers_edge_encoder': 2,
             'hidden_dim_node_decoder': 128,
-            'num_layers_node_decoder': 3,
+            'num_layers_node_decoder': 2,
             'k': 3,
         })
         trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)
@@ -109,6 +109,6 @@ if __name__ == "__main__":
             )
             predicts[sidx, tidx] = x.cpu()
             latents[sidx, tidx] = z.cpu()
-        np.save(f'predict/predict_l{dim}_3layers_forced_best.npy', predicts)
-        np.save(f'latent/latent_l{dim}_3layers_forced_best.npy', latents)
+        np.save(f'predict/predict_l{dim}tripletbest.npy', predicts)
+        np.save(f'latent/latent_l{dim}tripletbest.npy', latents)
         rank_zero_logger.info("Inference completed!")

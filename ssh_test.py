@@ -40,7 +40,7 @@ if __name__ == "__main__":
     logger = PythonLogger("main")  # General python logger
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
-    dim = 128
+    dim = 2
     start = time.time()
     rank_zero_logger.info("Testing started...")
     rank_zero_logger.info(torch.cuda.is_available())
@@ -50,8 +50,8 @@ if __name__ == "__main__":
 
 
     config = AttrDict({
-            'ckpt_path': "checkpoints/best",
-            'ckpt_name': f"model_l{dim}_3layers_best.pt",
+            'ckpt_path': "checkpoints/test_embedding_evo_all",
+            'ckpt_name': f"model_l{dim}_best.pt",
             'batch_size': 1,
             'epochs': 300,
             'lr':  0.00001,
@@ -65,15 +65,15 @@ if __name__ == "__main__":
             'output_encode_dim': 3,
             'processor_size': 15,
 
-            'num_layers_node_processor': 3,
-            'num_layers_edge_processor': 3,
+            'num_layers_node_processor': 2,
+            'num_layers_edge_processor': 2,
             'hidden_dim_processor': 128,
             'hidden_dim_node_encoder': 128,
-            'num_layers_node_encoder': 3,
+            'num_layers_node_encoder': 2,
             'hidden_dim_edge_encoder': 128,
-            'num_layers_edge_encoder': 3,
+            'num_layers_edge_encoder': 2,
             'hidden_dim_node_decoder': 128,
-            'num_layers_node_decoder': 3,
+            'num_layers_node_decoder': 2,
             'k': 3,
         })
     trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)

@@ -5,13 +5,13 @@ from sklearn.preprocessing import StandardScaler
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm import tqdm
 
-epochs = 23
+epochs = 53
 sequence_len = 401
 
 latents = np.empty((epochs+1, sequence_len, 2))
 
 for i in range(-1, epochs):
-    latents[i+1] = np.load(f'latent_evolution/{i}_True_False.npy').squeeze()[...,0]
+    latents[i+1] = np.load(f'latent_evolution/{i}_False_True.npy').squeeze()[...,0]
 
 # Standard scaling all data at once for consistency
 # sc = StandardScaler()
@@ -148,4 +148,4 @@ ani = animation.FuncAnimation(
     interval=11.111111,  # 50 ms per frame = 20 fps
 )
 
-ani.save('tracking_animation_new.gif', writer='PillowWriter', fps=90)
+ani.save('tracking_animation_cosine.gif', writer='PillowWriter', fps=90)

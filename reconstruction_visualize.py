@@ -69,18 +69,14 @@ def denormalize(invar, mu, std):
     denormalized_invar = invar * std.expand(invar.size()) + mu.expand(invar.size())
     return denormalized_invar
 
-dim = 64
 raw = np.load('./dataset/rawData.npy', allow_pickle=True)
 pos = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_all.txt"))
 faces = torch.from_numpy(np.load('mat_delaunay_filtered.npy'))
 traj = 90
 
 for dim in [2]:
-    if dim == 2:
-        predict = np.load(f'predict/predict_l{dim}_3.npy')
-    else:
-        predict = np.load(f'predict/predict_l{dim}.npy')
-    for time in [0, 50, 100, 200]:
+    predict = np.load(f'predict/predict_l{dim}allbest.npy')
+    for time in [0, 50, 100, 200, 400]:
         gt = torch.from_numpy(raw['x'][traj,time,:,0])
         denom = denormalize(torch.from_numpy(predict[traj-90, time,:]), node_stats["node_mean"], node_stats["node_std"])
 
@@ -98,4 +94,4 @@ for dim in [2]:
         plot_mesh(gt - denom[..., 0], pos, faces, ax=axes[2], fig=fig, title='GT - Prediction')
 
         plt.tight_layout()
-        fig.savefig(f'combined_plot_traj_{traj}_t{time}_dim{dim}.png', bbox_inches='tight')
+        fig.savefig(f'combined_plot_traj_{traj}_t{time}_dim{dim}allbest.png', bbox_inches='tight')
