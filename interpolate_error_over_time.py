@@ -138,7 +138,7 @@ with torch.no_grad():
 
 avg_relative_error_ss = np.array(avg_relative_error_ss)
 
-times = np.arange(2,len(avg_losses) + 2)
+times = np.arange(1,len(avg_losses) + 1)
 plt.figure(figsize=(15,8))
 plt.semilogy(times, avg_losses,label='avg_loss')
 plt.semilogy(times,avg_relative_errors,label='avg_rel_err')
