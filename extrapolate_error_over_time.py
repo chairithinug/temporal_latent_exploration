@@ -44,8 +44,8 @@ def denormalize(invar, mu, std):
     return denormalized_invar
 
 config = AttrDict({
-            #'ckpt_path': "checkpoints/test_embedding_evo_triplet",
-            'ckpt_path': "checkpoints/best",
+            'ckpt_path': "checkpoints/test_embedding_evo_triplet",
+            #'ckpt_path': "checkpoints/best",
             'ckpt_name': f"model_l2_best.pt",
             'batch_size': 1,
             'epochs': 300,
@@ -150,5 +150,5 @@ plt.grid()
 plt.xlabel('Timesteps')
 plt.ylabel('Error')
 plt.title('Errors over timesteps')
-plt.savefig('err_ot_90.png')
+plt.savefig('extra_err_ot_90.png')
 plt.show()
