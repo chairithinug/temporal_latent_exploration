@@ -5,6 +5,7 @@ Unused/
 *.zip
 *.npy
 *.pt
+*.gif
 
 thesis_venv/
 predict/
