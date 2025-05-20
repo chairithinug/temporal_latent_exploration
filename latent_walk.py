@@ -11,6 +11,7 @@ import os
 import wandb as wb
 from physicsnemo.launch.utils import load_checkpoint
 from tqdm import tqdm
+from torch.cuda.amp import GradScaler, autocast
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -25,7 +26,7 @@ dist = DistributedManager()
 logger = PythonLogger("main")  # General python logger
 rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
 
-latent = np.load(f'latent/latent_l2_3.npy')
+latent = np.load(f'latent/latent_l2tripletbest.npy')
 position_mesh = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_all.txt")).to(dist.device)
 position_pivotal = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_pivotal_l2.txt")).to(dist.device)
 gt = np.load('./latent/test_data.npy', allow_pickle=True)
@@ -33,30 +34,9 @@ gt = np.load('./latent/test_data.npy', allow_pickle=True)
 print(latent.shape) # (11, 401, 2, 3)
 print(gt.shape) # (11, 401, 1699, 3)
 
-# interpolation
-
-# short term
-# grab two random nearby points 
-a = 10
-u = np.random.randint(-a, a)
-t1 = np.random.choice(np.arange(a, 399 - a))
-t2= t1 + u
-if t1 > t2:
-    t1, t2 = t2, t1
-print(t1, t2)
-z1 = latent[0][t1]
-z2 = latent[0][t2]
-
-z_delta = (z2 - z1) / (t2 - t1)
-print(z_delta)
-
-z_hat = np.zeros((t2 - t1, 2, 3))
-for i in tqdm(range(t2 - t1)):
-    z_hat[i] = z1 + z_delta * (i + 1)
-
-# decoder
 config = AttrDict({
-            'ckpt_path': "checkpoints/test_embedding_evo_all",
+            'ckpt_path': "checkpoints/test_embedding_evo_triplet",
+            #'ckpt_path': "checkpoints/best",
             'ckpt_name': f"model_l2_best.pt",
             'batch_size': 1,
             'epochs': 300,
@@ -83,6 +63,16 @@ config = AttrDict({
             'k': 3,
         })
 
+idx = np.lib.stride_tricks.sliding_window_view(np.arange(len(gt[0])),window_shape=3)
+
+x_t1 = torch.from_numpy(gt[:, idx[:,1]]).cpu() # 11, 399, 1699, 3
+print(x_t1.shape)
+zt = latent[:,idx[:,0]]
+zt2 = latent[:,idx[:,2]]
+z_hat_t1 = torch.from_numpy((zt + zt2) / 2).cpu() # 11, 399, 2, 3
+    
+# decoder
+
 trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)
 trainer.epoch_init = load_checkpoint(
             os.path.join(config.ckpt_path, config.ckpt_name),
@@ -96,11 +86,53 @@ trainer.epoch_init = load_checkpoint(
 for graph in trainer.dataloader_test:
     break
 
-x_hats = np.zeros((t2 - t1, 1699, 3))
-for i, z in enumerate(z_hat):
-    x_hats[i] = trainer.model.decode(
-                z, graph.edata["x"], graph, position_mesh, position_pivotal
+def test(x, y, criterion=torch.nn.MSELoss()):
+    loss = criterion(x, y)
+    relative_error = (
+        loss / criterion(y, y * 0.0).detach()
     )
+    relative_error_s_record = []
+    for i in range(3):
+        loss_s = criterion(x[:, i], y[:, i])
+        relative_error_s = (
+            loss_s
+            / criterion(
+                y[:, i], y[:, i] * 0.0
+            ).detach()
+        )
+        relative_error_s_record.append(relative_error_s)
+    return loss, relative_error, relative_error_s_record
 
-np.save(f'interpolation/reconstruction_{t1}_{t2}.npy', x_hats)
+from physicsnemo.datapipes.gnn.utils import load_json
+node_stats = load_json("dataset/node_stats.json")
+
+def denormalize(invar, mu, std):
+    """denormalizes a tensor"""
+    denormalized_invar = invar * std.expand(invar.size()) + mu.expand(invar.size())
+    return denormalized_invar
+
+x_hats = torch.zeros_like(x_t1, device='cpu') # 11, 399, 1699, 3
+graph = graph.to(trainer.dist.device)
+loss_total = 0
+relative_error_total = 0
+relative_error_s_total = []
+with torch.no_grad():
+    with autocast(enabled=trainer.C.amp):
+        for i, z_traj in enumerate(z_hat_t1):
+            for j, z in enumerate(z_traj):
+                x_hats[i,j] = trainer.model.decode(
+                            z.cuda(), graph.edata["x"], graph, position_mesh, position_pivotal
+                ).cpu()
+                x_hats[i,j] = denormalize(x_hats[i,j], node_stats["node_mean"], node_stats["node_std"])
+                loss, relative_error, relative_error_s = test(x_hats[i,j], x_t1[i,j])
+                relative_error_s = [x.cpu() for x in relative_error_s]
+                relative_error_s_total.append(relative_error_s)
+                loss_total = loss_total + loss
+                relative_error_total = relative_error_total + relative_error
+n = 11 * 399
+avg_relative_error = relative_error_total / n
+avg_loss = loss_total / n
+avg_relative_error_s = np.array(relative_error_s_total).mean(axis=0)
+print(avg_loss,avg_relative_error, avg_relative_error_s)
+np.save(f'interpolation/reconstruction_triplet.npy', x_hats.detach().cpu().numpy())
 # 1-step rollout

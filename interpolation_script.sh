@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --time=1:00:00
-#SBATCH --mem=16G
+#SBATCH --mem=32G
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=cqk769@alumni.ku.dk
 #SBATCH --gres=gpu:a40:1

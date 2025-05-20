@@ -315,7 +315,7 @@ class Mesh_ReducedTrainer:
             sm = plt.cm.ScalarMappable(cmap="rainbow", norm=norm)
             fig.colorbar(sm, cax=cax, orientation="vertical")
             plt.title('Timesteps')
-            fname = f'latent_evolution/{epoch}_{self.C.triplet_loss}_{self.C.cosine_loss}_{name}.png'
+            fname = f'latent_evolution/256_{epoch}_{self.C.triplet_loss}_{self.C.cosine_loss}_{name}.png'
             plt.savefig(fname, bbox_inches='tight')
             plt.close()
 
@@ -424,7 +424,7 @@ if __name__ == "__main__":
             },
         'parameters': {
             'ckpt_path': {
-                 'value' : "checkpoints/test_embedding_evo_all"
+                 'value' : "checkpoints/v2_all"
             },
             'ckpt_name': {
                  'value' : f"model_l{latent}.pt"
@@ -475,22 +475,22 @@ if __name__ == "__main__":
                 'values' : [2]
             },
             'hidden_dim_processor': {
-                'values' : [128]
+                'values' : [256]
             },
             'hidden_dim_node_encoder': {
-                'values' : [128]
+                'values' : [256]
             },
             'num_layers_node_encoder': {
                 'values' : [2]
             },
             'hidden_dim_edge_encoder': {
-                'values' : [128]
+                'values' : [256]
             },
             'num_layers_edge_encoder': {
                 'values' : [2]
             },
             'hidden_dim_node_decoder': {
-                'values' : [128]
+                'values' : [256]
             },
             'num_layers_node_decoder': {
                 'values' : [2]

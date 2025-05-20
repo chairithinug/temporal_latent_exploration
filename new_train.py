@@ -333,10 +333,10 @@ if __name__ == "__main__":
                  'value' : "checkpoints/new_encoding"
             },
             'ckpt_name': {
-                 'value' : f"model_l{latent}_256hidden.pt"
+                 'value' : f"model_l{latent}_3_256.pt"
             },
             'ckpt_name_best': {
-                 'value' : f"model_l{latent}_256hidden_best.pt"
+                 'value' : f"model_l{latent}_3_256_best.pt"
             },
             'batch_size': {
                  'value' : 8
@@ -375,10 +375,10 @@ if __name__ == "__main__":
                 'value' : 15
             },
             'num_layers_node_processor': {
-                'values' : [2]
+                'values' : [3]
             },
             'num_layers_edge_processor': {
-                'values' : [2]
+                'values' : [3]
             },
             'hidden_dim_processor': {
                 'values' : [256]
@@ -387,19 +387,19 @@ if __name__ == "__main__":
                 'values' : [256]
             },
             'num_layers_node_encoder': {
-                'values' : [2]
+                'values' : [3]
             },
             'hidden_dim_edge_encoder': {
                 'values' : [256]
             },
             'num_layers_edge_encoder': {
-                'values' : [2]
+                'values' : [3]
             },
             'hidden_dim_node_decoder': {
                 'values' : [256]
             },
             'num_layers_node_decoder': {
-                'values' : [2]
+                'values' : [3]
             },
              'k': {
                 'value' : 3

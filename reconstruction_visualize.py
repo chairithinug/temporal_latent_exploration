@@ -75,7 +75,7 @@ faces = torch.from_numpy(np.load('mat_delaunay_filtered.npy'))
 traj = 90
 
 for dim in [2]:
-    predict = np.load(f'predict/predict_l{dim}allbest.npy')
+    predict = np.load(f'predict/predict_l{dim}cosinebest.npy')
     for time in [0, 50, 100, 200, 400]:
         gt = torch.from_numpy(raw['x'][traj,time,:,0])
         denom = denormalize(torch.from_numpy(predict[traj-90, time,:]), node_stats["node_mean"], node_stats["node_std"])
@@ -94,4 +94,4 @@ for dim in [2]:
         plot_mesh(gt - denom[..., 0], pos, faces, ax=axes[2], fig=fig, title='GT - Prediction')
 
         plt.tight_layout()
-        fig.savefig(f'combined_plot_traj_{traj}_t{time}_dim{dim}allbest.png', bbox_inches='tight')
+        fig.savefig(f'combined_plot_traj_{traj}_t{time}_dim{dim}cosinebest.png', bbox_inches='tight')

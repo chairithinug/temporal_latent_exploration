@@ -4,8 +4,8 @@
 #SBATCH --error=error_%j.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
-#SBATCH --time=24:00:00
-#SBATCH --mem=32G
+#SBATCH --time=48:00:00
+#SBATCH --mem=64G
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=cqk769@alumni.ku.dk
 #SBATCH --gres=gpu:a40:1

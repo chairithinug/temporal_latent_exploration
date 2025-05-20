@@ -59,7 +59,8 @@ if __name__ == "__main__":
     #for dim in [16, 32, 64, 128, 256]:
     for dim in [2]:
         config = AttrDict({
-            'ckpt_path': "checkpoints/test_embedding_evo_triplet",
+            #'ckpt_path': "checkpoints/test_embedding_evo_cosine",
+            'ckpt_path': "checkpoints/best",
             'ckpt_name': f"model_l{dim}_best.pt",
             'batch_size': 1,
             'epochs': 300,
@@ -109,6 +110,6 @@ if __name__ == "__main__":
             )
             predicts[sidx, tidx] = x.cpu()
             latents[sidx, tidx] = z.cpu()
-        np.save(f'predict/predict_l{dim}tripletbest.npy', predicts)
-        np.save(f'latent/latent_l{dim}tripletbest.npy', latents)
+        np.save(f'predict/predict_l{dim}best.npy', predicts)
+        np.save(f'latent/latent_l{dim}best.npy', latents)
         rank_zero_logger.info("Inference completed!")

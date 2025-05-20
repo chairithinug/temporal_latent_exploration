@@ -52,6 +52,8 @@ class Mesh_ReducedTrainer:
             name="vortex_shedding_train", split="test"
         )
 
+        self.node_stats = dataset_test.node_stats
+
         self.C = C
 
         self.dataloader = GraphDataLoader(
@@ -187,18 +189,22 @@ class Mesh_ReducedTrainer:
             x = self.model.decode(
                 z, graph.edata["x"], graph, position_mesh, position_pivotal
             )
-            loss = self.criterion(x, graph.ndata["x"])
+
+            x = VortexSheddingRe300To1000Dataset.denormalize(x, self.node_stats["node_mean"].cuda(), self.node_stats["node_std"].cuda())
+            gt = VortexSheddingRe300To1000Dataset.denormalize(graph.ndata["x"], self.node_stats["node_mean"].cuda(), self.node_stats["node_std"].cuda())
+
+            loss = self.criterion(x, gt)
 
             relative_error = (
-                loss / self.criterion(graph.ndata["x"], graph.ndata["x"] * 0.0).detach()
+                loss / self.criterion(gt, gt * 0.0).detach()
             )
             relative_error_s_record = []
             for i in range(self.C.num_input_features):
-                loss_s = self.criterion(x[:, i], graph.ndata["x"][:, i])
+                loss_s = self.criterion(x[:, i], gt[:, i])
                 relative_error_s = (
                     loss_s
                     / self.criterion(
-                        graph.ndata["x"][:, i], graph.ndata["x"][:, i] * 0.0
+                        gt[:, i], gt[:, i] * 0.0
                     ).detach()
                 )
                 relative_error_s_record.append(relative_error_s)

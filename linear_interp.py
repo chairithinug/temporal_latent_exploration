@@ -10,7 +10,6 @@ from dgl.dataloading import GraphDataLoader
 from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
 
-from constants import Constants
 from dataset import (
     VortexSheddingRe300To1000Dataset,
 )
@@ -61,18 +60,20 @@ class AttrDict(dict):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
-def test(graph, criterion=torch.nn.MSELoss()):
-    loss = criterion(graph.ndata["x"], graph.ndata["y"])
+def test(graph, criterion=torch.nn.MSELoss(), node_stats=None):
+    x = VortexSheddingRe300To1000Dataset.denormalize(graph.ndata["x"], node_stats["node_mean"], node_stats["node_std"])
+    gt = VortexSheddingRe300To1000Dataset.denormalize(graph.ndata["y"], node_stats["node_mean"], node_stats["node_std"])
+    loss = criterion(x, gt)
     relative_error = (
-        loss / criterion(graph.ndata["y"], graph.ndata["y"] * 0.0).detach()
+        loss / criterion(gt, gt * 0.0).detach()
     )
     relative_error_s_record = []
     for i in range(3):
-        loss_s = criterion(graph.ndata["x"][:, i], graph.ndata["y"][:, i])
+        loss_s = criterion(x[:, i], gt[:, i])
         relative_error_s = (
             loss_s
             / criterion(
-                graph.ndata["y"][:, i], graph.ndata["y"][:, i] * 0.0
+                gt[:, i], gt[:, i] * 0.0
             ).detach()
         )
         relative_error_s_record.append(relative_error_s)
@@ -83,8 +84,9 @@ if __name__ == "__main__":
     print(len(ds))
     loss_total = 0
     relative_error_total = 0
+    node_stats = load_json("dataset/node_stats.json")
     for x in tqdm(ds):
-        loss, relative_error, relative_error_s = test(x)
+        loss, relative_error, relative_error_s = test(x, node_stats=node_stats)
         loss_total = loss_total + loss
         relative_error_total = relative_error_total + relative_error
     n = len(ds)

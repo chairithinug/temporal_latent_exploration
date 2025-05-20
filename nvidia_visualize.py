@@ -57,7 +57,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import torch
 
 @torch.no_grad()
-def plot_multiple_timesteps(velocity_array, mesh_pos, faces, timesteps, title_prefix="Trajectory 79"):
+def plot_multiple_timesteps(velocity_array, mesh_pos, faces, timesteps, title_prefix="Trajectory 79", mode='x'):
     """
     Plots 5 vertical subplots of the mesh at different timesteps.
     """
@@ -65,8 +65,17 @@ def plot_multiple_timesteps(velocity_array, mesh_pos, faces, timesteps, title_pr
     if len(timesteps) == 1:
         axes = [axes]
 
-    vmin = velocity_array[:, :, 0].min()
-    vmax = velocity_array[:, :, 0].max()
+    if mode == 'x':
+        attribute = 0
+        cb_title = "x velocity\n(m/s)"
+    elif mode == 'y':
+        attribute = 1
+        cb_title = "y velocity\n(m/s)"
+    else:
+        attribute = 2
+        cb_title = "pressure\n"
+    vmin = velocity_array[:, :, attribute].min()
+    vmax = velocity_array[:, :, attribute].max()
 
     for ax, t in zip(axes, timesteps):
         ax.set_aspect("equal")
@@ -76,7 +85,7 @@ def plot_multiple_timesteps(velocity_array, mesh_pos, faces, timesteps, title_pr
         triang = mtri.Triangulation(
             mesh_pos[:, 0].cpu(), mesh_pos[:, 1].cpu(), faces.cpu()
         )
-        velocity = velocity_array[t, :, 0]
+        velocity = velocity_array[t, :, attribute]
         mesh_plot = ax.tripcolor(
             triang,
             velocity.cpu(),
@@ -108,7 +117,7 @@ def plot_multiple_timesteps(velocity_array, mesh_pos, faces, timesteps, title_pr
     cbar_ax = fig.add_axes([0.8, 0.05, 0.05, 0.9])
     cbar = fig.colorbar(mesh_plot, cax=cbar_ax, orientation="vertical")
     cbar.ax.tick_params(labelsize=20)
-    cbar.ax.set_title("x velocity\n(m/s)", fontsize=18)
+    cbar.ax.set_title(cb_title, fontsize=18)
     plt.tight_layout()
     return fig
 
@@ -121,12 +130,14 @@ filtered_faces = np.load('mat_delaunay_filtered.npy')
 # Prepare tensors
 pos_tensor = torch.from_numpy(pos)
 faces_tensor = torch.from_numpy(filtered_faces)
-traj = 79
-velocity_tensor = torch.from_numpy(raw['x'][traj])  # shape: [timesteps, nodes, features]
 
-# Define timesteps
-timesteps = [0, 50, 100, 200, 400]
+for traj in [0, 40, 79]:
+    velocity_tensor = torch.from_numpy(raw['x'][traj])  # shape: [timesteps, nodes, features]
 
-# Plot and save
-fig = plot_multiple_timesteps(velocity_tensor, pos_tensor, faces_tensor, timesteps, title_prefix=f"Trajectory {traj}")
-fig.savefig(f'z{traj}.png', bbox_inches='tight')
+    # Define timesteps
+    timesteps = [0, 50, 100, 200, 400]
+
+    # Plot and save
+    for mode in ['x','y','p']:
+        fig = plot_multiple_timesteps(velocity_tensor, pos_tensor, faces_tensor, timesteps, title_prefix=f"Trajectory {traj}", mode=mode)
+        fig.savefig(f'dataset_visualize/{traj}_{mode}.png', bbox_inches='tight')
