@@ -13,7 +13,7 @@ xs = [np.random.randn(N, 2) * (i + 1) for i in range(21)]
 
 # Row and column titles
 row_titles = ["dim=2", "dim=16", "dim=32", "dim=62", "dim=128", "dim=256", "Original"]
-col_titles = ["V_x", "V_y", "p"]
+col_titles = ["x-vel", "y-vel", "p"]
 
 # Setup
 fig = plt.figure(figsize=(10, 15))

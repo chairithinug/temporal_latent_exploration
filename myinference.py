@@ -56,8 +56,8 @@ if __name__ == "__main__":
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
 
-    #for dim in [16, 32, 64, 128, 256]:
-    for dim in [2]:
+    for dim in [256]:
+    #for dim in [2]:
         config = AttrDict({
             #'ckpt_path': "checkpoints/test_embedding_evo_cosine",
             'ckpt_path': "checkpoints/best",
