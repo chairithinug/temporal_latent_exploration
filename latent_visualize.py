@@ -64,7 +64,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 # Row and column titles
-row_titles = ["dim=2", "dim=16", "dim=32", "dim=62", "dim=128", "dim=256", "Original"]
+row_titles = ["dim=2", "dim=16", "dim=32", "dim=64", "dim=128", "dim=256", "Original"]
 col_titles = ["x-vel", "y-vel", "p"]
 
 xlim = (-30, 30)
