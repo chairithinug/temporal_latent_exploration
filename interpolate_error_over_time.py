@@ -120,7 +120,7 @@ with torch.no_grad():
             loss_total = 0
             relative_error_total = 0
             relative_error_s_total = []
-            for j in range(1): # traj
+            for j in range(len(x_hats)): # traj
                 loss, relative_error, relative_error_s = test(x_hats[j,i], x_t2[j,i])
                 relative_error_s = [x.cpu() for x in relative_error_s]
                 relative_error_s_total.append(relative_error_s)
@@ -135,20 +135,37 @@ with torch.no_grad():
             avg_relative_error_ss.append(avg_relative_error_s)
 
             print(avg_loss,avg_relative_error, avg_relative_error_s)
-
+avg_losses = np.array(avg_losses)
+avg_relative_errors = np.array(avg_relative_errors)
 avg_relative_error_ss = np.array(avg_relative_error_ss)
 
 times = np.arange(1,len(avg_losses) + 1)
 plt.figure(figsize=(15,8))
-plt.semilogy(times, avg_losses,label='avg_loss')
-plt.semilogy(times,avg_relative_errors,label='avg_rel_err')
-plt.semilogy(times,avg_relative_error_ss[:,0],label='avg_rel_x')
-plt.semilogy(times,avg_relative_error_ss[:,1],label='avg_rel_y')
-plt.semilogy(times,avg_relative_error_ss[:,2],label='avg_rel_p')
+plt.semilogy(times, avg_losses,label='avg_loss', alpha=0.7, marker='o')
+plt.semilogy(times,avg_relative_errors,label='avg_rel_err', alpha=0.7)
+plt.semilogy(times,avg_relative_error_ss[:,0],label='avg_rel_x', alpha=0.7)
+plt.semilogy(times,avg_relative_error_ss[:,1],label='avg_rel_y', alpha=0.7)
+plt.semilogy(times,avg_relative_error_ss[:,2],label='avg_rel_p', alpha=0.7)
 plt.legend()
 plt.grid()
 plt.xlabel('Timesteps')
-plt.ylabel('Error')
-plt.title('Errors over timesteps')
-plt.savefig('inter_err_ot_90.png')
+plt.ylabel('Log MSE')
+name = 'inter_err_ot_90'
+#name = 'inter_err_ot'
+if name == 'inter_err_ot_90':
+    plt.title('Log MSEs of interpolated data over timesteps\nTrajectory 90 (Test)')
+else:
+    plt.title('Average log MSEs of interpolated data over timesteps\nacross all Test trajectories')
+plt.savefig(f'{name}.png')
+errs = {}
+errs['avg_loss'] = avg_losses.tolist()
+errs['avg_rel_err'] = avg_relative_errors.tolist()
+errs['avg_rel_x'] = avg_relative_error_ss[:,0].tolist()
+errs['avg_rel_y'] = avg_relative_error_ss[:,1].tolist()
+errs['avg_rel_p'] = avg_relative_error_ss[:,2].tolist()
+errs['timesteps'] = times.tolist()
+import json
+with open(f'{name}.json', 'w') as f:
+    json.dump(errs, f, indent=4)
+plt.tight_layout()
 plt.show()
