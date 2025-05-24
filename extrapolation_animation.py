@@ -55,8 +55,8 @@ gs = fig.add_gridspec(3, 2, width_ratios=[1, 1], height_ratios=[1, 1, 1], wspace
 
 # Axes assignment
 lax = fig.add_subplot(gs[:2, 0])       # Latent space spans all rows of left column
-rax = fig.add_subplot(gs[0, 1])       # Row 1, right column
-gax = fig.add_subplot(gs[1, 1])       # Row 2, right column
+rax = fig.add_subplot(gs[1, 1])       # Row 1, right column
+gax = fig.add_subplot(gs[0, 1])       # Row 2, right column
 dax = fig.add_subplot(gs[2, 1])       # Row 3, right column
 eax = fig.add_subplot(gs[2, 0])
 
@@ -71,6 +71,7 @@ def update(frame):
     eax.semilogy(times[:frame], loss[:frame], label='avg_loss', alpha=0.7, marker='o')
     eax.set_xlabel('Timesteps', fontsize=15)
     eax.set_ylabel('Log MSE', fontsize=15)
+    eax.set_title('Log MSE vs Timesteps', fontsize=25)
     
     # Plot latent space
     lax.scatter(latent[0, :frame, 0, 0], latent[0, :frame, 1, 0], alpha=0.5, c='gray', s=25)

@@ -14,6 +14,7 @@ file_paths = {
 }
 
 file_sizes = {name: os.path.getsize(path) / MB for name, path in file_paths.items()}
+print(file_sizes)
 original_size = file_sizes['test_data']
 
 print(f"Original file (test_data) size: {original_size:.2f} MB\n")
@@ -39,7 +40,12 @@ model_paths = {
 
 model_sizes = {name: (os.path.getsize(path) / MB if os.path.exists(path) else 0) for name, path in model_paths.items()}
 meshpos_size = os.path.getsize('dataset/meshPosition_all.txt') / MB
-
+print(model_sizes)
+nodestat_size = os.path.getsize('dataset/node_stats.json') / MB
+edgestat_size = os.path.getsize('dataset/edge_stats.json') / MB
+print(f'{meshpos_size:3f}')
+print(f'{nodestat_size:3f}')
+print(f'{edgestat_size:3f}')
 pivotpos_paths = {
     'latent_l2': 'dataset/meshPosition_pivotal_l2.txt',
     'latent_l16': 'dataset/meshPosition_pivotal_l16.txt',
@@ -51,16 +57,16 @@ pivotpos_paths = {
 }
 
 pivot_sizes = {name: (os.path.getsize(path) / MB if os.path.exists(path) else 0) for name, path in pivotpos_paths.items()}
-
-print(f"\nOriginal file (test_data + meshPosition_all) size: {original_size + meshpos_size:.2f} MB\n")
+print(pivot_sizes)
+print(f"\nOriginal file (test_data + meshPosition_all + node_stats + edge_stats) size: {original_size + meshpos_size + nodestat_size + edgestat_size:.2f} MB\n")
 
 print(f"{'Latent Name':<15} {'Size (MB)':<15} {'% of Original':<15} {'Compression Factor':<20}")
 print("-" * 65)
 
-original_size_total = original_size + meshpos_size
+original_size_total = original_size + meshpos_size + nodestat_size + edgestat_size
 
 for name in file_sizes.keys():
-    size_total = file_sizes[name] + model_sizes[name] + pivot_sizes[name] + meshpos_size
+    size_total = file_sizes[name] + model_sizes[name] + pivot_sizes[name] + meshpos_size + nodestat_size + edgestat_size
     percent = (size_total / original_size_total) * 100
     factor = original_size_total / size_total
     print(f"{name:<15} {size_total:<15.3f} {percent:<15.3f} {factor:<20.2f}")
@@ -69,13 +75,13 @@ for name in file_sizes.keys():
 markdown_lines = []
 
 markdown_lines.append(f"# Compression Report\n")
-markdown_lines.append(f"Original file (test_data + meshPosition_all): **{original_size_total:.2f} MB**\n")
+markdown_lines.append(f"Original file (test_data + meshPosition_all + node_stats + edge_stats) size: **{original_size_total:.2f} MB**\n")
 markdown_lines.append("## Summary Table\n")
 markdown_lines.append("| Latent Name   | Size (MB)     | % of Original | Compression Factor |")
 markdown_lines.append("|---------------|---------------|----------------|---------------------|")
 
 for name in file_sizes.keys():
-    size_total = file_sizes[name] + model_sizes[name] + pivot_sizes[name] + meshpos_size
+    size_total = file_sizes[name] + model_sizes[name] + pivot_sizes[name] + meshpos_size + nodestat_size + edgestat_size
     percent = (size_total / original_size_total) * 100
     factor = original_size_total / size_total
     markdown_lines.append(f"| {name:<13} | {size_total:<13.3f} | {percent:<14.3f} | {factor:<19.2f} |")
