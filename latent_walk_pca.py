@@ -187,5 +187,5 @@ avg_loss = loss_total / n
 
 avg_relative_error_s = np.array(relative_error_s_total).mean(axis=0)
 print(avg_loss,avg_relative_error, avg_relative_error_s)
-# np.save(f'interpolation/reconstruction_triplet.npy', x_hats.detach().cpu().numpy())
+np.save(f'interpolation/reconstruction_pca_per_attr.npy', x_hats.detach().cpu().numpy())
 # 1-step rollout

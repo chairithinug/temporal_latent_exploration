@@ -11,7 +11,7 @@ sequence_len = 401
 latents = np.empty((epochs+1, sequence_len, 2))
 
 for i in range(-1, epochs):
-    latents[i+1] = np.load(f'latent_evolution/{i}_False_True.npy').squeeze()[...,0]
+    latents[i+1] = np.load(f'latent_evolution v1/{i}_False_True.npy').squeeze()[...,0]
 
 # Standard scaling all data at once for consistency
 # sc = StandardScaler()

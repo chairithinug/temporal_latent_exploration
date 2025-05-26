@@ -114,13 +114,15 @@ n = len(x_hats[0])
 avg_losses = []
 avg_relative_errors = []
 avg_relative_error_ss = []
+name = 'extra_err_ot_90'
+#name = 'extra_err_ot'
 with torch.no_grad():
     with autocast(enabled=trainer.C.amp):
         for i in range(n): # timestep
             loss_total = 0
             relative_error_total = 0
             relative_error_s_total = []
-            for j in range(len(x_hats)): # traj
+            for j in range(len(x_hats) if name =='extra_err_ot' else 1): # traj
                 loss, relative_error, relative_error_s = test(x_hats[j,i], x_t2[j,i])
                 relative_error_s = [x.cpu() for x in relative_error_s]
                 relative_error_s_total.append(relative_error_s)
@@ -149,13 +151,11 @@ plt.semilogy(times,avg_relative_error_ss[:,2],label='avg_rel_p', alpha=0.7)
 plt.legend()
 plt.grid()
 plt.xlabel('Timesteps')
-plt.ylabel('Log MSE')
-name = 'extra_err_ot_90'
-#name = 'extra_err_ot'
+plt.ylabel('Log error')
 if name == 'extra_err_ot_90':
-    plt.title('Log MSEs of extrapolated data over timesteps\nTrajectory 90 (Test)')
+    plt.title('Log errors of extrapolated data over timesteps\nTrajectory 90 (Test)')
 else:
-    plt.title('Average log MSEs of extrapolated data over timesteps\nacross all Test trajectories')
+    plt.title('Average log errors of extrapolated data over timesteps\nacross all Test trajectories')
 plt.savefig(f'{name}.png')
 errs = {}
 errs['avg_loss'] = avg_losses.tolist()

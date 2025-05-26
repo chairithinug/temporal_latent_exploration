@@ -87,9 +87,7 @@ position_pivotal = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_pivotal_l2
 gt = np.load('./latent/test_data.npy', allow_pickle=True) # (11, 401, 1699, 3)
 
 idx = np.lib.stride_tricks.sliding_window_view(np.arange(len(gt[0])),window_shape=3)
-x_t2 = torch.from_numpy(gt[:, idx[:,2]]).cpu() # 11, 399, 1699, 3
-zt, zt1 = latent[:,idx[:,0]], latent[:,idx[:,1]]
-z_hat_t2 = torch.from_numpy((2 * zt1 - zt)).cpu() # 11, 399, 2, 3
+x_t1 = torch.from_numpy(gt[:, idx[:,1]]).cpu() # 11, 399, 1699, 3
  
 trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)
 trainer.epoch_init = load_checkpoint(
@@ -114,14 +112,16 @@ n = len(x_hats[0])
 avg_losses = []
 avg_relative_errors = []
 avg_relative_error_ss = []
+name = 'inter_err_ot_90'
+#name = 'inter_err_ot'
 with torch.no_grad():
     with autocast(enabled=trainer.C.amp):
         for i in range(n): # timestep
             loss_total = 0
             relative_error_total = 0
             relative_error_s_total = []
-            for j in range(len(x_hats)): # traj
-                loss, relative_error, relative_error_s = test(x_hats[j,i], x_t2[j,i])
+            for j in range(len(x_hats) if name =='inter_err_ot' else 1): # traj
+                loss, relative_error, relative_error_s = test(x_hats[j,i], x_t1[j,i])
                 relative_error_s = [x.cpu() for x in relative_error_s]
                 relative_error_s_total.append(relative_error_s)
                 loss_total = loss_total + loss
@@ -149,13 +149,12 @@ plt.semilogy(times,avg_relative_error_ss[:,2],label='avg_rel_p', alpha=0.7)
 plt.legend()
 plt.grid()
 plt.xlabel('Timesteps')
-plt.ylabel('Log MSE')
-name = 'inter_err_ot_90'
-#name = 'inter_err_ot'
+plt.ylabel('Log error')
+
 if name == 'inter_err_ot_90':
-    plt.title('Log MSEs of interpolated data over timesteps\nTrajectory 90 (Test)')
+    plt.title('Log errors of interpolated data over timesteps\nTrajectory 90 (Test)')
 else:
-    plt.title('Average log MSEs of interpolated data over timesteps\nacross all Test trajectories')
+    plt.title('Average log errors of interpolated data over timesteps\nacross all Test trajectories')
 plt.savefig(f'{name}.png')
 errs = {}
 errs['avg_loss'] = avg_losses.tolist()
