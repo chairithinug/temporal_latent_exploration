@@ -57,8 +57,10 @@ class Mesh_ReducedTrainer:
         self.dataloader = GraphDataLoader(
             dataset_train,
             batch_size=self.C.batch_size,
-            shuffle=True,
-            drop_last=True,
+            # shuffle=True, # train
+            # drop_last=True, # train
+            shuffle=False, # inference_all
+            drop_last=False, # inference_all
             pin_memory=True,
             use_ddp=dist.world_size > 1,
             num_workers=8,
@@ -67,8 +69,10 @@ class Mesh_ReducedTrainer:
         self.dataloader_val = GraphDataLoader(
             dataset_val,
             batch_size=self.C.batch_size,
-            shuffle=False,
-            drop_last=True,
+            # shuffle=False, # train
+            # drop_last=True, # train
+            shuffle=False, # inference_all
+            drop_last=False, # inference_all
             pin_memory=True,
             use_ddp=dist.world_size > 1,
             num_workers=8,

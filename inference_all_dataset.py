@@ -56,8 +56,8 @@ if __name__ == "__main__":
     rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     logger.file_logging()
 
-    for dim in [2]:
-    #for dim in [2]:
+    #for dim in [256]:
+    for dim in [256]:
         config = AttrDict({
             #'ckpt_path': "checkpoints/test_embedding_evo_cosine",
             'ckpt_path': "checkpoints/best",
@@ -99,8 +99,8 @@ if __name__ == "__main__":
             scaler=trainer.scaler,
             device=dist.device,
         )
-        predicts = np.zeros((11, sequence_len, len(position_mesh), 3))
-        latents = np.zeros((11, sequence_len, dim, 3))
+        predicts = np.zeros((101, sequence_len, len(position_mesh), 3))
+        latents = np.zeros((101, sequence_len, dim, 3))
         # Batch size must be 1
         for j, graph in tqdm(enumerate(trainer.dataloader_test)):
             sidx = j // sequence_len
@@ -110,6 +110,22 @@ if __name__ == "__main__":
             )
             predicts[sidx, tidx] = x.cpu()
             latents[sidx, tidx] = z.cpu()
-        np.save(f'predict/predict_l{dim}best.npy', predicts)
-        np.save(f'latent/latent_l{dim}best.npy', latents)
+        for j, graph in tqdm(enumerate(trainer.dataloader_val)):
+            sidx = j // sequence_len
+            tidx = j % sequence_len
+            x, z = trainer.predict(
+                graph, position_mesh, position_pivotal
+            )
+            predicts[sidx+80, tidx] = x.cpu()
+            latents[sidx+80, tidx] = z.cpu()
+        for j, graph in tqdm(enumerate(trainer.dataloader_test)):
+            sidx = j // sequence_len
+            tidx = j % sequence_len
+            x, z = trainer.predict(
+                graph, position_mesh, position_pivotal
+            )
+            predicts[sidx+90, tidx] = x.cpu()
+            latents[sidx+90, tidx] = z.cpu()
+        np.save(f'predict/allsets_l{dim}best.npy', predicts)
+        np.save(f'latent/allsets_l{dim}best.npy', latents)
         rank_zero_logger.info("Inference completed!")

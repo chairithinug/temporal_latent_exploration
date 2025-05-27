@@ -75,10 +75,12 @@ pos = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_all.txt"))
 faces = torch.from_numpy(np.load('mat_delaunay_filtered.npy'))
 traj = 90
 
+attrib = 2
+
 for dim in [2]:
     predict = np.load(f'predict/predict_l{dim}tripletbest.npy')
     for time in [0, 50, 100, 200, 400]:
-        gt = torch.from_numpy(raw['x'][traj,time,:,0])
+        gt = torch.from_numpy(raw['x'][traj,time,:,attrib])
         denom = denormalize(torch.from_numpy(predict[traj-90, time,:]), node_stats["node_mean"], node_stats["node_std"])
 
         # fig = plot_mesh(gt, pos, faces)
@@ -90,12 +92,12 @@ for dim in [2]:
         # fig = plot_mesh(denom[...,0], pos, faces)
         # fig.savefig(f'visualize_pred{dim}_traj_{traj}_t{time}.png', bbox_inches='tight')
         fig, axes = plt.subplots(3, 1, figsize=(20, 30))
-        vmin = min(denom[..., 0].min(),gt.min())
-        vmax = max(denom[..., 0].max(),gt.max())
+        vmin = min(denom[..., attrib].min(),gt.min())
+        vmax = max(denom[..., attrib].max(),gt.max())
 
-        plot_mesh(denom[..., 0], pos, faces, vmin=vmin, vmax=vmax, ax=axes[1], fig=fig, title='Reconstruction (Recon)')
+        plot_mesh(denom[..., attrib], pos, faces, vmin=vmin, vmax=vmax, ax=axes[1], fig=fig, title='Reconstruction (Recon)')
         plot_mesh(gt, pos, faces, vmin=vmin, vmax=vmax, ax=axes[0], fig=fig, title='Ground Truth (GT)')
-        plot_mesh(gt - denom[..., 0], pos, faces, ax=axes[2], fig=fig, title='GT - Recon')
+        plot_mesh(gt - denom[..., attrib], pos, faces, ax=axes[2], fig=fig, title='GT - Recon')
 
         plt.tight_layout()
-        fig.savefig(f'combined_plot_traj_{traj}_t{time}_dim{dim}tripletbest.png', bbox_inches='tight')
+        fig.savefig(f'combined_plot_traj_{traj}_t{time}_dim{dim}_{attrib}tripletbest.png', bbox_inches='tight')
