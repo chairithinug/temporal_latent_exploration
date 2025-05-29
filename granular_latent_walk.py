@@ -101,11 +101,11 @@ def denormalize(invar, mu, std):
     denormalized_invar = invar * std.expand(invar.size()) + mu.expand(invar.size())
     return denormalized_invar
 
-x_hats = torch.zeros((11, 10, 1699, 3), device='cpu') # 11, 399, 1699, 3
+x_hats = torch.zeros((11, 11, 1699, 3), device='cpu') # 11, 399, 1699, 3
 start = torch.from_numpy(latent[:,121]).unsqueeze(1)
 end = torch.from_numpy(latent[:,122]).unsqueeze(1)
-alphas = torch.linspace(0, 1, steps=10)
-alphas = alphas.view(1, 10, 1, 1)
+alphas = torch.linspace(0, 1, steps=11)
+alphas = alphas.view(1, 11, 1, 1)
 print(alphas.shape)
 print(start.shape)
 zhats = (1 - alphas) * start + alphas * end

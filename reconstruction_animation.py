@@ -14,9 +14,9 @@ def plot_mesh(velocity, mesh_pos, faces, vmin=None, vmax=None, ax=None, title='M
 
     triang = mtri.Triangulation(mesh_pos[:, 0].cpu(), mesh_pos[:, 1].cpu(), faces.cpu())
     mesh_plot = ax.tripcolor(
-        triang, velocity.cpu(), vmin=vmin, vmax=vmax, shading="flat", cmap="viridis"
+        triang, velocity.cpu(), vmin=vmin, vmax=vmax, shading="gouraud", cmap="viridis"
     )
-    ax.triplot(triang, "ko-", ms=0.5, lw=0.3)
+    #ax.triplot(triang, "ko-", ms=0.5, lw=0.3)
     ax.set_title(title, fontsize=12)
 
     return mesh_plot

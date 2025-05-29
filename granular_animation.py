@@ -14,9 +14,9 @@ def plot_mesh(velocity, mesh_pos, faces, vmin=None, vmax=None, ax=None, title='M
 
     triang = mtri.Triangulation(mesh_pos[:, 0].cpu(), mesh_pos[:, 1].cpu(), faces.cpu())
     mesh_plot = ax.tripcolor(
-        triang, velocity.cpu(), vmin=vmin, vmax=vmax, shading="flat", cmap="viridis"
+        triang, velocity.cpu(), vmin=vmin, vmax=vmax, shading="gouraud", cmap="viridis"
     )
-    ax.triplot(triang, "ko-", ms=0.5, lw=0.3)
+    # ax.triplot(triang, "ko-", ms=0.5, lw=0.3)
     ax.set_title(title, fontsize=12)
 
     return mesh_plot
@@ -27,13 +27,14 @@ node_stats = load_json("dataset/node_stats.json")
 raw = np.load('./dataset/rawData.npy', allow_pickle=True)
 pos = torch.from_numpy(np.loadtxt("dataset/meshPosition_all.txt"))
 faces = torch.from_numpy(np.load('mat_delaunay_filtered.npy'))
-predict = np.load('interpolation/reconstruction_90_granular_120_131_triplet.npy')  # assuming dim = 2
+predict = np.load('interpolation/reconstruction_granular_121_122_10steps_triplet.npy')  # assuming dim = 2
 
 traj = 90
 attributes = [0, 1, 2]
-times = list(range(120,130))
+times = list(range(11))
 
-fig, axes = plt.subplots(1, 3, figsize=(8, 18))
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+plt.tight_layout(rect=[0, 0, 0.95, 0.95])
 cbar_axes = [make_axes_locatable(axes[j]).append_axes("right", size="5%", pad=0.05)
              for j in range(3)]
 def init():
@@ -43,7 +44,7 @@ def init():
 
 def update(frame_idx):
     time = times[frame_idx]
-    pred = torch.from_numpy(predict[traj - 90, time-120, :])  # (num_nodes, 3)
+    pred = torch.from_numpy(predict[traj - 90, time, :])  # (num_nodes, 3)
 
     mesh_plots = []
 
@@ -63,8 +64,8 @@ def update(frame_idx):
             cb.ax.tick_params(labelsize=8)
             mesh_plots.append(mesh)
 
-    fig.suptitle(f"Time = {time}", fontsize=16)
+    fig.suptitle(f"Time = {121+(time)/10:.2f}", fontsize=16)
     return mesh_plots
 
 ani = FuncAnimation(fig, update, frames=len(times), interval=50, init_func=init, blit=False)
-ani.save("granular.gif", writer='pillow')
+ani.save(f"granular{traj}.gif", writer='pillow')
