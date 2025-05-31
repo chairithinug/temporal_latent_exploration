@@ -8,8 +8,6 @@ Unused/
 *.gif
 
 thesis_venv/
-predict/
-latent/
 checkpoints/
 visualization/
 wandb/
