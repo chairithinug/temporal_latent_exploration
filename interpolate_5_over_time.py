@@ -85,7 +85,10 @@ latent = np.load(f'latent/latent_l2tripletbest.npy')
 position_mesh = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_all.txt")).to(dist.device)
 position_pivotal = torch.from_numpy(np.loadtxt(f"dataset/meshPosition_pivotal_l2.txt")).to(dist.device)
 gt = np.load('./latent/test_data.npy', allow_pickle=True) # (11, 401, 1699, 3)
-gt = torch.from_numpy(gt)
+
+idx = np.lib.stride_tricks.sliding_window_view(np.arange(len(gt[0])),window_shape=5)
+x_t1 = torch.from_numpy(gt[:, idx[:,1:4]]).cpu()
+
 trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)
 trainer.epoch_init = load_checkpoint(
             os.path.join(config.ckpt_path, config.ckpt_name),
@@ -99,10 +102,8 @@ trainer.epoch_init = load_checkpoint(
 for graph in trainer.dataloader_test:
     break
 
-from physicsnemo.datapipes.gnn.utils import load_json
-node_stats = load_json("dataset/node_stats.json")
-
-x_hats = torch.from_numpy(np.load('predict/predict_l2tripletbest.npy')).cpu() # 11, 401, 1699, 3
+#x_hats = torch.zeros_like(x_t2, device='cpu') # 11, 399, 1699, 3
+x_hats = torch.from_numpy(np.load('interpolation/reconstruction_5_triplet.npy')).cpu() # 11, 397, 3 1699, 3
 graph = graph.to(trainer.dist.device)
 loss_total = 0
 relative_error_total = 0
@@ -111,18 +112,16 @@ n = len(x_hats[0])
 avg_losses = []
 avg_relative_errors = []
 avg_relative_error_ss = []
-print(n, len(x_hats))
-#name = 'recon_err_ot_90'
-name = 'recon_err_ot'
+name = 'inter_err_ot_90'
+#name = 'inter_err_ot'
 with torch.no_grad():
     with autocast(enabled=trainer.C.amp):
         for i in range(n): # timestep
             loss_total = 0
             relative_error_total = 0
             relative_error_s_total = []
-            for j in range(len(x_hats) if name =='recon_err_ot' else 1): # traj
-                x_hats[j,i] = denormalize(x_hats[j,i], node_stats["node_mean"], node_stats["node_std"])
-                loss, relative_error, relative_error_s = test(x_hats[j,i], gt[j,i])
+            for j in range(len(x_hats) if name =='inter_err_ot' else 1): # traj
+                loss, relative_error, relative_error_s = test(x_hats[j,i], x_t1[j,i])
                 relative_error_s = [x.cpu() for x in relative_error_s]
                 relative_error_s_total.append(relative_error_s)
                 loss_total = loss_total + loss
@@ -140,7 +139,7 @@ avg_losses = np.array(avg_losses)
 avg_relative_errors = np.array(avg_relative_errors)
 avg_relative_error_ss = np.array(avg_relative_error_ss)
 
-times = np.arange(0,len(avg_losses))
+times = np.arange(1,len(avg_losses) + 1)
 plt.figure(figsize=(15,8))
 plt.semilogy(times, avg_losses,label='avg_loss', alpha=0.7, marker='o')
 plt.semilogy(times,avg_relative_errors,label='avg_rel_err', alpha=0.7)
@@ -152,10 +151,10 @@ plt.grid()
 plt.xlabel('Timesteps')
 plt.ylabel('Log error')
 
-if name == 'recon_err_ot_90':
-    plt.title('Log errors of reconstruction over timesteps\nTrajectory 90 (Test)')
+if name == 'inter_err_ot_90':
+    plt.title('Log errors of interpolated data over timesteps\nTrajectory 90 (Test)')
 else:
-    plt.title('Average log errors of reconstruction over timesteps\nacross all Test trajectories')
+    plt.title('Average log errors of interpolated data over timesteps\nacross all Test trajectories')
 plt.savefig(f'{name}.png')
 errs = {}
 errs['avg_loss'] = avg_losses.tolist()
