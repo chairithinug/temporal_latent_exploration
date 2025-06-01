@@ -6,10 +6,16 @@ Unused/
 *.npy
 *.gif
 
+!checkpoints/best/
+!checkpoints/test_embedding_evo/
+!checkpoints/test_embedding_evo_cosine/
+!checkpoints/test_embedding_evo_triplet/
+!checkpoints/test_embedding_evo_all/
 thesis_venv/
 predict/
 latent/
-latent_evolution/*.npy
+latent_evolution/
+'latent_evolution v1/'
 checkpoints/
 visualization/
 wandb/
