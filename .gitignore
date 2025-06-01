@@ -8,19 +8,19 @@ Unused/
 
 !checkpoints/best/
 !checkpoints/best/*
-!checkpoints/best/*/*
+!checkpoints/best/*/*.pt
 !checkpoints/test_embedding_evo/
 !checkpoints/test_embedding_evo/*
-!checkpoints/test_embedding_evo/*/*
+!checkpoints/test_embedding_evo/*/*.pt
 !checkpoints/test_embedding_evo_cosine/
 !checkpoints/test_embedding_evo_cosine/*
-!checkpoints/test_embedding_evo_cosine/*/*
+!checkpoints/test_embedding_evo_cosine/*/*.pt
 !checkpoints/test_embedding_evo_triplet/
 !checkpoints/test_embedding_evo_triplet/*
-!checkpoints/test_embedding_evo_triplet/*/*
+!checkpoints/test_embedding_evo_triplet/*/*.pt
 !checkpoints/test_embedding_evo_all/
 !checkpoints/test_embedding_evo_all/*
-!checkpoints/test_embedding_evo_all/*/*
+!checkpoints/test_embedding_evo_all/*/*.pt
 thesis_venv/
 predict/
 latent/
