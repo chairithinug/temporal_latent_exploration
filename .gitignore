@@ -6,6 +6,7 @@ Unused/
 *.npy
 *.gif
 
+checkpoints/
 !checkpoints/best/
 !checkpoints/best/*
 !checkpoints/best/*/*.pt
@@ -26,7 +27,6 @@ predict/
 latent/
 latent_evolution/
 'latent_evolution v1/'
-checkpoints/
 visualization/
 wandb/
 mesh_vis/
