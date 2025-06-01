@@ -11,7 +11,7 @@ thesis_venv/
 predict/
 latent/
 latent_evolution/
-'latent_evolution v1/'
+latent_evolution\ v1/
 visualization/
 wandb/
 mesh_vis/
