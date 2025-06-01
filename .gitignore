@@ -7,10 +7,20 @@ Unused/
 *.gif
 
 !checkpoints/best/
+!checkpoints/best/*
+!checkpoints/best/*/*
 !checkpoints/test_embedding_evo/
+!checkpoints/test_embedding_evo/*
+!checkpoints/test_embedding_evo/*/*
 !checkpoints/test_embedding_evo_cosine/
+!checkpoints/test_embedding_evo_cosine/*
+!checkpoints/test_embedding_evo_cosine/*/*
 !checkpoints/test_embedding_evo_triplet/
+!checkpoints/test_embedding_evo_triplet/*
+!checkpoints/test_embedding_evo_triplet/*/*
 !checkpoints/test_embedding_evo_all/
+!checkpoints/test_embedding_evo_all/*
+!checkpoints/test_embedding_evo_all/*/*
 thesis_venv/
 predict/
 latent/
