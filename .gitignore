@@ -15,3 +15,5 @@ latent_evolution/
 visualization/
 wandb/
 mesh_vis/
+dataset/latent_train.pt
+dataset/latent_test.pt
