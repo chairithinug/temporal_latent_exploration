@@ -101,11 +101,13 @@ def denormalize(invar, mu, std):
     denormalized_invar = invar * std.expand(invar.size()) + mu.expand(invar.size())
     return denormalized_invar
 
-x_hats = torch.zeros((11, 11, 1699, 3), device='cpu') # 11, 399, 1699, 3
-start = torch.from_numpy(latent[:,121]).unsqueeze(1)
-end = torch.from_numpy(latent[:,122]).unsqueeze(1)
-alphas = torch.linspace(0, 1, steps=11)
-alphas = alphas.view(1, 11, 1, 1)
+x_hats = torch.zeros((11, 21, 1699, 3), device='cpu') # 11, 399, 1699, 3
+#start = torch.from_numpy(latent[:,121]).unsqueeze(1)
+start = torch.from_numpy(latent[:,0]).unsqueeze(1)
+#end = torch.from_numpy(latent[:,122]).unsqueeze(1)
+end = torch.from_numpy(latent[:,-1]).unsqueeze(1)
+alphas = torch.linspace(0, 1, steps=21)
+alphas = alphas.view(1, 21, 1, 1)
 print(alphas.shape)
 print(start.shape)
 zhats = (1 - alphas) * start + alphas * end
@@ -120,5 +122,5 @@ with torch.no_grad():
                 ).cpu()
                 x_hats[i,j] = denormalize(x_hats[i,j], node_stats["node_mean"], node_stats["node_std"])
 
-np.save(f'interpolation/reconstruction_90_granular_120_131_triplet.npy', x_hats.detach().cpu().numpy())
+np.save(f'interpolation/reconstruction_90_coarse_0_400_triplet.npy', x_hats.detach().cpu().numpy())
 # 1-step rollout

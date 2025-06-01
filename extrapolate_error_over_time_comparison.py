@@ -117,8 +117,8 @@ def evaluate_predictions(x_hats, x_t2, name, trainer):
                     relative_error_s_total.append(relative_error_s)
                     loss_total += loss
                     relative_error_total += relative_error
-                avg_loss = loss_total / n
-                avg_relative_error = relative_error_total / n
+                avg_loss = loss_total / j
+                avg_relative_error = relative_error_total / j
                 avg_relative_error_s = np.array(relative_error_s_total).mean(axis=0)
 
                 avg_losses.append(avg_loss.cpu())

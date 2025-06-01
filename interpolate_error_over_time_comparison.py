@@ -83,7 +83,7 @@ rank_zero_logger = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
 gt = np.load('./latent/test_data.npy', allow_pickle=True) # (11, 401, 1699, 3)
 
 idx = np.lib.stride_tricks.sliding_window_view(np.arange(len(gt[0])),window_shape=3)
-x_t2 = torch.from_numpy(gt[:, idx[:,2]]).cpu() # 11, 399, 1699, 3
+x_t2 = torch.from_numpy(gt[:, idx[:,1]]).cpu() # 11, 399, 1699, 3
  
 trainer = Mesh_ReducedTrainer(wb, dist, rank_zero_logger, config)
 trainer.epoch_init = load_checkpoint(
@@ -117,8 +117,8 @@ def evaluate_predictions(x_hats, x_t2, name, trainer):
                     relative_error_s_total.append(relative_error_s)
                     loss_total += loss
                     relative_error_total += relative_error
-                avg_loss = loss_total / n
-                avg_relative_error = relative_error_total / n
+                avg_loss = loss_total / j
+                avg_relative_error = relative_error_total / j
                 avg_relative_error_s = np.array(relative_error_s_total).mean(axis=0)
 
                 avg_losses.append(avg_loss.cpu())
@@ -128,7 +128,7 @@ def evaluate_predictions(x_hats, x_t2, name, trainer):
     avg_losses = np.array(avg_losses)
     avg_relative_errors = np.array(avg_relative_errors)
     avg_relative_error_ss = np.array(avg_relative_error_ss)
-    times = np.arange(2, len(avg_losses) + 2)
+    times = np.arange(1, len(avg_losses) + 1)
 
     # Save as JSON
     errs = {

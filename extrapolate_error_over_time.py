@@ -114,8 +114,8 @@ n = len(x_hats[0])
 avg_losses = []
 avg_relative_errors = []
 avg_relative_error_ss = []
-name = 'extra_err_ot_90'
-#name = 'extra_err_ot'
+#name = 'extra_err_ot_90'
+name = 'extra_err_ot'
 with torch.no_grad():
     with autocast(enabled=trainer.C.amp):
         for i in range(n): # timestep
@@ -128,8 +128,8 @@ with torch.no_grad():
                 relative_error_s_total.append(relative_error_s)
                 loss_total = loss_total + loss
                 relative_error_total = relative_error_total + relative_error
-            avg_relative_error = relative_error_total / n
-            avg_loss = loss_total / n
+            avg_relative_error = relative_error_total / j
+            avg_loss = loss_total / j
             avg_relative_error_s = np.array(relative_error_s_total).mean(axis=0)
 
             avg_losses.append(avg_loss.cpu())
