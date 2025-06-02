@@ -10,6 +10,7 @@ mat_delaunay_filtered.npy
 ## Reconstruction (test trajectory 90) from GAE with a triplet loss
 ![Reconstruction w/ triplet](small_animation/mesh_animation_grid-2.gif)
 ## Latent evolution of test trajectory 90 from GAE with a triplet loss
+The animation goes beyond the checkpoint used as the best model (step=31).
 ![Reconstruction w/ triplet](small_animation/tracking_animation_triplet.gif)
 ## Interpolation (test trajectory 90) from GAE with a triplet loss
 ![interpolate](small_animation/test_interpolate_optimized-2.gif)
